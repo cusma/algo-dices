@@ -22,7 +22,7 @@ from getpass import getpass
 from algosdk import account
 from algosdk import mnemonic
 from algosdk.atomic_transaction_composer import AccountTransactionSigner
-from algosdk.constants import MIN_TXN_FEE
+from algosdk.constants import MIN_TXN_FEE, MNEMONIC_LEN
 
 from beaker.client import ApplicationClient, Network
 from beaker.client.api_providers import AlgoExplorer
@@ -30,6 +30,7 @@ from beaker.client.api_providers import AlgoExplorer
 from algodices_dapp import AlgoDices
 
 ALGO_DICES_APP_ID = 120974808
+RANDOMNESS_BEACON_DELAY = 8
 
 
 def args_types(args: dict) -> dict:
@@ -51,7 +52,7 @@ def main():
     # USER
     mnemonic_phrase = getpass(prompt="Mnemonic (word_1 word_2 ... word_25):")
     try:
-        assert len(mnemonic_phrase.split()) == 25
+        assert len(mnemonic_phrase.split()) == MNEMONIC_LEN
     except AssertionError:
         quit('\n⚠️ Enter mnemonic phrase, formatted as: "word_1 ... word_25"')
     user = AccountTransactionSigner(mnemonic.to_private_key(mnemonic_phrase))
@@ -77,7 +78,7 @@ def main():
     if args["book"]:
         current_round = testnet.algod().status()["last-round"]
         booked_round = current_round + args["<future_rounds>"]
-        reveal_round = booked_round + 8
+        reveal_round = booked_round + RANDOMNESS_BEACON_DELAY
         print(f"\n --- 🔖 Booking a die roll for round {booked_round}...")
         algo_dices.call(
             method=AlgoDices.book_die_roll,
@@ -87,8 +88,10 @@ def main():
 
     elif args["roll"]:
         current_round = testnet.algod().status()["last-round"]
-        booked_round = algo_dices.get_account_state(user_address)["commitment_round"]
-        rounds_left = booked_round + 8 - current_round
+        booked_round = algo_dices.get_account_state(user_address)[
+            AlgoDices.randomness_round.key.byte_str[1:-1]
+        ]
+        rounds_left = booked_round + RANDOMNESS_BEACON_DELAY - current_round
         if rounds_left > 0:
             print(f" --- ⏳ {rounds_left} round left to reveal die's roll...")
         else:
