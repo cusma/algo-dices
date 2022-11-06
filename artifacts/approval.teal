@@ -1,0 +1,189 @@
+#pragma version 7
+intcblock 0 1
+bytecblock 0x72616e646f6d6e6573735f726f756e64 0x626561636f6e5f6170705f6964
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l6
+txna ApplicationArgs 0
+pushbytes 0xd4b179cc // "book_die_roll(uint64)void"
+==
+bnz main_l5
+txna ApplicationArgs 0
+pushbytes 0x6a1634d3 // "roll_die(application,uint64)uint64[3]"
+==
+bnz main_l4
+err
+main_l4:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+store 2
+txna ApplicationArgs 2
+btoi
+store 3
+load 2
+load 3
+callsub rolldie_4
+store 4
+pushbytes 0x151f7c75 // 0x151f7c75
+load 4
+concat
+log
+intc_1 // 1
+return
+main_l5:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+callsub bookdieroll_3
+intc_1 // 1
+return
+main_l6:
+txn OnCompletion
+intc_0 // NoOp
+==
+bnz main_l10
+txn OnCompletion
+intc_1 // OptIn
+==
+bnz main_l9
+err
+main_l9:
+txn ApplicationID
+intc_0 // 0
+!=
+assert
+callsub optin_1
+intc_1 // 1
+return
+main_l10:
+txn ApplicationID
+intc_0 // 0
+==
+assert
+callsub create_0
+intc_1 // 1
+return
+
+// create
+create_0:
+intc_0 // 0
+bytec_1 // "beacon_app_id"
+app_global_get_ex
+store 1
+store 0
+load 1
+!
+assert
+bytec_1 // "beacon_app_id"
+pushint 110096026 // 110096026
+app_global_put
+retsub
+
+// opt_in
+optin_1:
+txn Sender
+bytec_0 // "randomness_round"
+intc_0 // 0
+app_local_put
+retsub
+
+// get_randomness
+getrandomness_2:
+txn Sender
+bytec_0 // "randomness_round"
+app_local_get
+store 9
+txn Sender
+store 10
+load 10
+len
+itob
+extract 6 0
+load 10
+concat
+store 10
+itxn_begin
+pushint 6 // appl
+itxn_field TypeEnum
+bytec_1 // "beacon_app_id"
+app_global_get
+itxn_field ApplicationID
+pushbytes 0x47c20c23 // "must_get(uint64,byte[])byte[]"
+itxn_field ApplicationArgs
+load 9
+itob
+itxn_field ApplicationArgs
+load 10
+itxn_field ApplicationArgs
+intc_0 // 0
+itxn_field Fee
+itxn_submit
+itxn LastLog
+extract 4 0
+retsub
+
+// book_die_roll
+bookdieroll_3:
+store 8
+load 8
+global Round
+>
+// Die roll round must be in the future.
+assert
+txn Sender
+bytec_0 // "randomness_round"
+load 8
+app_local_put
+retsub
+
+// roll_die
+rolldie_4:
+store 5
+txnas Applications
+bytec_1 // "beacon_app_id"
+app_global_get
+==
+// Randomness Beacon App ID must be correct.
+assert
+txn Sender
+bytec_0 // "randomness_round"
+app_local_get
+store 6
+callsub getrandomness_2
+extract 0 8
+btoi
+load 5
+%
+intc_1 // 1
++
+store 7
+txn Sender
+bytec_0 // "randomness_round"
+intc_0 // 0
+app_local_put
+load 6
+itob
+load 5
+itob
+concat
+load 7
+itob
+concat
+retsub

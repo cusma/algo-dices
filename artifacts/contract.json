@@ -1,0 +1,43 @@
+{
+    "name": "AlgoDices",
+    "methods": [
+        {
+            "name": "book_die_roll",
+            "args": [
+                {
+                    "type": "uint64",
+                    "name": "future_round",
+                    "desc": "Future round booked for a die roll"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "Book a die roll for a future round."
+        },
+        {
+            "name": "roll_die",
+            "args": [
+                {
+                    "type": "application",
+                    "name": "randomness_beacon",
+                    "desc": "Randomness Beacon App ID (110096026)"
+                },
+                {
+                    "type": "uint64",
+                    "name": "faces",
+                    "desc": "Number of faces (e.g. 2, 4, 6, 8, 10, 12, 20, 100, ...)"
+                }
+            ],
+            "returns": {
+                "type": "uint64[3]",
+                "desc": "Die roll: (booked_round, faces, result)"
+            },
+            "desc": "Roll a die with a given number of faces."
+        }
+    ],
+    "networks": {
+        "SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=": { "appID": 120974808 }
+    },
+    "desc": "Algorand Dices Application"
+}
