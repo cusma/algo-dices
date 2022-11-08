@@ -82,7 +82,7 @@ class AlgoDices(Application):
 
         Args:
             randomness_beacon: Randomness Beacon App ID (110096026)
-            faces: Number of faces (e.g. 2, 4, 6, 8, 10, 12, 20, 100, ...)
+            faces: Number of faces (2, 4, 6, 8, 10, 12, 20)
 
         Returns:
             Die roll: (booked_round, faces, result)
@@ -90,10 +90,23 @@ class AlgoDices(Application):
         randomness = Btoi(
             Extract(string=self.get_randomness(), start=Int(0), length=Int(8))
         )
+        is_valid_faces = Or(
+            faces.get() == Int(2),
+            faces.get() == Int(4),
+            faces.get() == Int(6),
+            faces.get() == Int(8),
+            faces.get() == Int(10),
+            faces.get() == Int(12),
+            faces.get() == Int(20),
+        )
         return Seq(
             Assert(
                 randomness_beacon.application_id() == self.beacon_app_id,
                 comment="Randomness Beacon App ID must be correct.",
+            ),
+            Assert(
+                is_valid_faces,
+                comment="Number of faces must be equal to real ideal dices.",
             ),
             (booked_round := abi.Uint64()).set(self.randomness_round[Txn.sender()]),
             (result := abi.Uint64()).set(randomness % faces.get() + Int(1)),

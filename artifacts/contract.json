@@ -26,7 +26,7 @@
                 {
                     "type": "uint64",
                     "name": "faces",
-                    "desc": "Number of faces (e.g. 2, 4, 6, 8, 10, 12, 20, 100, ...)"
+                    "desc": "Number of faces (2, 4, 6, 8, 10, 12, 20)"
                 }
             ],
             "returns": {
@@ -37,7 +37,7 @@
         }
     ],
     "networks": {
-        "SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=": { "appID": 120974808 }
+        "SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=": { "appID": 121287966 }
     },
     "desc": "Algorand Dices Application"
 }

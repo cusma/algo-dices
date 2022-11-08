@@ -1,5 +1,5 @@
 #pragma version 7
-intcblock 0 1
+intcblock 0 1 6
 bytecblock 0x72616e646f6d6e6573735f726f756e64 0x626561636f6e5f6170705f6964
 txn NumAppArgs
 intc_0 // 0
@@ -120,7 +120,7 @@ load 10
 concat
 store 10
 itxn_begin
-pushint 6 // appl
+intc_2 // appl
 itxn_field TypeEnum
 bytec_1 // "beacon_app_id"
 app_global_get
@@ -161,6 +161,35 @@ bytec_1 // "beacon_app_id"
 app_global_get
 ==
 // Randomness Beacon App ID must be correct.
+assert
+load 5
+pushint 2 // 2
+==
+load 5
+pushint 4 // 4
+==
+||
+load 5
+intc_2 // 6
+==
+||
+load 5
+pushint 8 // 8
+==
+||
+load 5
+pushint 10 // 10
+==
+||
+load 5
+pushint 12 // 12
+==
+||
+load 5
+pushint 20 // 20
+==
+||
+// Number of faces must be equal to real ideal dices.
 assert
 txn Sender
 bytec_0 // "randomness_round"

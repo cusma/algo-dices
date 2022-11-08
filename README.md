@@ -3,7 +3,7 @@
 Let's roll your dices on Algorand!
 
 ## Overview
-[AlgoDices](https://testnet.algoexplorer.io/application/120974808) application
+[AlgoDices](https://testnet.algoexplorer.io/application/121287966) application
 let players **roll dices on-chain** (TestNet), thanks the [*Randomness Beacon Application*](https://developer.algorand.org/articles/usage-and-best-practices-for-randomness-beacon/).
 
 Starting from AVM 7, Algorand enables [turstless randomness on chain](https://developer.algorand.org/articles/randomness-on-algorand),
@@ -55,9 +55,9 @@ mandate `future_round` to be greater than current round plus `N`.
 the previous booked randomness is unused.
 
 ### Let's roll a die!
-Once the booked randomness is available, players can roll a die of **any number
-of faces** (e.g. usally `d4`, `d6`, `d8`, `d10`, `d12`, `d20`, `d100` are
-common dices in board games).
+Once the booked randomness is available, players can roll a die with a *"real"
+number of faces* (`d4`, `d6`, `d8`, `d10`, `d12`, `d20`, are common dices in
+board games).
 
 ⚠️ Players should wait at least for `future_round + 8` round to be sure that
 their booked randomness is available in the Randomness Beacon App.
@@ -74,7 +74,7 @@ their booked randomness is available in the Randomness Beacon App.
         {
             "type": "uint64",
             "name": "faces",
-            "desc": "Number of faces (e.g. 2, 4, 6, 8, 10, 12, 20, 100, ...)"
+            "desc": "Number of faces (2, 4, 6, 8, 10, 12, 20)"
         }
     ],
     "returns": {
@@ -89,6 +89,13 @@ AlgoDice `die_roll` returns an array containing:
 1. Randomness booked round;
 2. Die's faces;
 3. The result.
+
+## 🎰 Games
+On-chain games can _call_ AlgoDices imposing their own rules, for example:
+a `GameApp` calls `roll_die` two times (on behalf of players Alice and Bob
+participating in the game thourgh proxy Contract Accounts controlled by
+GameApp) as Inner Transactions executed in the same GameApp Call, requiring
+`faces = 6`. The highest result wins the match.
 
 ## CLI
 You can easily roll a die with the Python 🎲 AlgoDices CLI.

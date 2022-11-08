@@ -29,8 +29,9 @@ from beaker.client.api_providers import AlgoExplorer
 
 from algodices_dapp import AlgoDices
 
-ALGO_DICES_APP_ID = 120974808
+ALGO_DICES_APP_ID = 121287966
 RANDOMNESS_BEACON_DELAY = 8
+FACES = [2, 4, 6, 8, 10, 12, 20]
 
 
 def args_types(args: dict) -> dict:
@@ -87,6 +88,9 @@ def main():
         return print(f" --- Result can be revealed from round: {reveal_round}")
 
     elif args["roll"]:
+        if args["<faces>"] not in FACES:
+            quit(f"\n⚠️ Number of faces must be either: {FACES}")
+
         current_round = testnet.algod().status()["last-round"]
         booked_round = algo_dices.get_account_state(user_address)[
             AlgoDices.randomness_round.key.byte_str[1:-1]
