@@ -2,42 +2,56 @@
     "name": "AlgoDices",
     "methods": [
         {
-            "name": "book_die_roll",
+            "name": "book_dices_roll",
             "args": [
                 {
                     "type": "uint64",
                     "name": "future_round",
-                    "desc": "Future round booked for a die roll"
+                    "desc": "Future round booked for dices roll"
                 }
             ],
             "returns": {
                 "type": "void"
             },
-            "desc": "Book a die roll for a future round."
+            "desc": "Book dices roll for a future round."
         },
         {
-            "name": "roll_die",
+            "name": "roll_dices",
             "args": [
                 {
                     "type": "application",
                     "name": "randomness_beacon",
-                    "desc": "Randomness Beacon App ID (110096026)"
+                    "desc": "Randomness Beacon App ID (TestNet: 110096026, MainNet: 947957720)"
                 },
                 {
-                    "type": "uint64",
-                    "name": "faces",
-                    "desc": "Number of faces (2, 4, 6, 8, 10, 12, 20)"
+                    "type": "uint8[]",
+                    "name": "dices",
+                    "desc": "Array of dices to roll (faces: 2, 4, 6, 8, 10, 12, 20)"
                 }
             ],
             "returns": {
-                "type": "uint64[3]",
-                "desc": "Die roll: (booked_round, faces, result)"
+                "type": "uint8[]",
+                "desc": "Dices roll result."
             },
-            "desc": "Roll a die with a given number of faces."
+            "desc": "Roll dices with a given number of faces. Fee: 3 * min_fee."
+        },
+        {
+            "name": "create",
+            "args": [
+                {
+                    "type": "application",
+                    "name": "randomness_beacon",
+                    "desc": "Randomness Beacon App ID (TestNet: 110096026, MainNet: 947957720)"
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "AlgoDices App Create"
         }
     ],
     "networks": {
-        "SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=": { "appID": 121287966 }
+        "SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=": { "appID": 149459287 }
     },
-    "desc": "Algorand Dices Application"
+    "desc": "AlgoDices Application"
 }

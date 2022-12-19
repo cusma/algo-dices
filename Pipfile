@@ -4,9 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-beaker-pyteal = "*"
+beaker-pyteal = {git = "https://github.com/algorand-devrel/beaker", editable = true, ref = "sdk-break-prep"}
 docopt = "*"
-py-algorand-sdk = "*"
+py-algorand-sdk = {git = "https://github.com/algorand/py-algorand-sdk", editable = true, ref = "develop"}
 pyteal = "*"
 
 [dev-packages]
