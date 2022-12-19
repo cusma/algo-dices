@@ -1,6 +1,6 @@
 #pragma version 8
 intcblock 0 1 6 2
-bytecblock 0x72616e646f6d6e6573735f726f756e64 0x626561636f6e5f6170705f6964 0x068101
+bytecblock 0x626561636f6e5f6170705f6964 0x72616e646f6d6e6573735f726f756e64 0x068101
 txn NumAppArgs
 intc_0 // 0
 ==
@@ -90,7 +90,7 @@ return
 // opt_in
 optin_0:
 txn Sender
-bytec_0 // "randomness_round"
+bytec_1 // "randomness_round"
 intc_0 // 0
 app_local_put
 retsub
@@ -98,7 +98,7 @@ retsub
 // get_randomness
 getrandomness_1:
 txn Sender
-bytec_0 // "randomness_round"
+bytec_1 // "randomness_round"
 app_local_get
 store 17
 txn Sender
@@ -113,7 +113,7 @@ store 18
 itxn_begin
 intc_2 // appl
 itxn_field TypeEnum
-bytec_1 // "beacon_app_id"
+bytec_0 // "beacon_app_id"
 app_global_get
 itxn_field ApplicationID
 pushbytes 0x47c20c23 // "must_get(uint64,byte[])byte[]"
@@ -171,7 +171,7 @@ global Round
 // Dices roll round must be in the future.
 assert
 txn Sender
-bytec_0 // "randomness_round"
+bytec_1 // "randomness_round"
 load 16
 app_local_put
 retsub
@@ -191,7 +191,7 @@ global MinTxnFee
 bnz rolldices_4_l8
 load 3
 txnas Applications
-bytec_1 // "beacon_app_id"
+bytec_0 // "beacon_app_id"
 app_global_get
 ==
 // Wrong Randomness Beacon App ID.
@@ -337,7 +337,7 @@ store 13
 b rolldices_4_l1
 rolldices_4_l9:
 txn Sender
-bytec_0 // "randomness_round"
+bytec_1 // "randomness_round"
 intc_0 // 0
 app_local_put
 load 10
@@ -366,6 +366,15 @@ intc_0 // 0
 ==
 // Wrong Local State Schema. Must be: 0 byte slices.
 assert
+intc_0 // 0
+bytec_0 // "beacon_app_id"
+app_global_get_ex
+store 22
+store 21
+load 22
+!
+// AlgoDices App already created!
+assert
 load 20
 txnas Applications
 pushint 110096026 // 110096026
@@ -378,14 +387,14 @@ pushint 947957720 // 947957720
 // Wrong Randomness Beacon App ID. Must be either: 110096026 (TestNet) or 947957720 (MainNet).
 assert
 intc_0 // 0
-bytec_1 // "beacon_app_id"
+bytec_0 // "beacon_app_id"
 app_global_get_ex
-store 22
-store 21
-load 22
+store 24
+store 23
+load 24
 !
 assert
-bytec_1 // "beacon_app_id"
+bytec_0 // "beacon_app_id"
 load 20
 txnas Applications
 app_global_put

@@ -4,7 +4,7 @@ Let's roll your dices on Algorand!
 
 ## Overview
 AlgoDices let players **roll dices on-chain** (both
-[TestNet](https://testnet.algoexplorer.io/application/149459287)
+[TestNet](https://testnet.algoexplorer.io/application/149464577)
 and [MainNet]()), thanks the [*Randomness Beacon Application*](https://developer.algorand.org/articles/usage-and-best-practices-for-randomness-beacon/).
 
 Starting from AVM 7, Algorand enables [turstless randomness on chain](https://developer.algorand.org/articles/randomness-on-algorand),

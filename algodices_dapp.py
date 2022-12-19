@@ -201,6 +201,10 @@ class AlgoDices(Application):
                 comment="Wrong Local State Schema. Must be: 0 byte slices.",
             ),
             Assert(
+                Not(self.beacon_app_id.exists()),
+                comment="AlgoDices App already created!",
+            ),
+            Assert(
                 Or(
                     randomness_beacon.application_id() == Int(TESTNET_BEACON_APP_ID),
                     randomness_beacon.application_id() == Int(MAINNET_BEACON_APP_ID),
