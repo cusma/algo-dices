@@ -9,6 +9,10 @@ from beaker import *
 
 MAX_FACES = 20
 MAX_N_DICES = 14
+
+# Ensure that the maximum dice to the power of the max number of
+# simultaneous dices fits in a 64 bits integer, which is necessary for
+# randomness generation below.
 assert MAX_FACES**MAX_N_DICES <= 2**64
 
 OP_CODE_BUDGET_TXNS = 1
