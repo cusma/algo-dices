@@ -193,7 +193,7 @@ Dices_Result --> AlgoDices_User
 Thanks to [@ori-shem-tov](https://github.com/ori-shem-tov),
 [@fabrice102](https://github.com/fabrice102) for the Randomness Oracle
 Application and [@barnjamin](https://github.com/barnjamin) for the
-[CoinFilpper](https://github.com/algorand-devrel/coin-flipper) example that
+[CoinFlipper](https://github.com/algorand-devrel/coin-flipper) example that
 inspired AlgoDices.
 
 Another special thanks again to [@fabrice102](https://github.com/fabrice102)
