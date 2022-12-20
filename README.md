@@ -187,6 +187,7 @@ Dices_Result --> AlgoDices_User
 
 - [x] ~~Multiple dices rolls on single round (e.g. `[2d6, 1d8, 1d20]`);~~
 - [ ] Contract Account proxy for players;
+- [ ] Switch to 512 bits math allowing more than 14 dices;
 - [ ] Unlimited dices rolls (pay-per-roll).
 
 ## Credits
