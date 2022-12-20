@@ -23,7 +23,7 @@ other applications for a given (future) round according to [ARC-21](https://arc.
 AlgoDices ABI exposes two methods:
 
 1. `book_dices_roll`
-2. `roll_dieces`
+2. `roll_dices`
 
 AlgoDices App requires players to opt-in.
 
@@ -91,7 +91,7 @@ their booked randomness is available in the Randomness Beacon App.
 }
 ```
 
-AlgoDice `dices_roll` returns an array containing the dices results.
+AlgoDice `roll_dices` returns an array containing the dices results.
 
 ## 🎰 Games
 On-chain games can _call_ AlgoDices imposing their own rules, for example:
@@ -102,8 +102,8 @@ GameApp) as Inner Transactions executed in the same GameApp Call, requiring
 
 AlgoDices is also a _trustless dices roller_ to play board games and
 RPGs (like D&D) "over-the-phone": players can safely roll dices remotely,
-with no mean of cheating. A Dungeon Master could ask the Wizard Elf 🧝
-to roll 8d6 to count Fireball damages 🔥 and be sure the result is correct!
+with no mean of cheating. A Dungeon Master could ask the 🧝🏻‍♀️ Wizard Elf
+to roll `8d6` to count 🔥 Fireball damages and be sure the result is correct!
 
 ## CLI
 You can easily roll dices with the Python 🎲 AlgoDices CLI.
@@ -197,4 +197,5 @@ Application and [@barnjamin](https://github.com/barnjamin) for the
 inspired AlgoDices.
 
 Another special thanks again to [@fabrice102](https://github.com/fabrice102)
-for the precious and clever considerations on "safe" randomness.
+for the precious and clever considerations on "safe" optimization of
+randomness source usage.
