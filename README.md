@@ -19,6 +19,10 @@ and [MainNet](https://algoexplorer.io/application/947957720),
 which verifies, stores and provides the randomness to
 other applications for a given (future) round according to [ARC-21](https://arc.algorand.foundation/ARCs/arc-0021).
 
+> NOTE: There is a non-negligible risk the MainNet Randomness Beacon
+> miss certain round or becomes unavailable. In the latter case a new
+> version of AlgoDices will be released.
+
 ## ABI
 AlgoDices ABI exposes two methods:
 

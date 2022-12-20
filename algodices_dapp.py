@@ -7,7 +7,10 @@ from algosdk.constants import MIN_TXN_FEE
 from pyteal import *
 from beaker import *
 
+MAX_FACES = 20
 MAX_N_DICES = 14
+assert MAX_FACES**MAX_N_DICES <= 2**64
+
 OP_CODE_BUDGET_TXNS = 1
 TESTNET_BEACON_APP_ID = 110096026
 MAINNET_BEACON_APP_ID = 947957720
@@ -115,13 +118,12 @@ class AlgoDices(Application):
         dice = ScratchVar(TealType.uint64)
         p_dice = ScratchVar(TealType.uint64)
         p_dice_bytes = ScratchVar(TealType.bytes)
-        rolled_dices = ScratchVar(TealType.uint64)
         dices_results_bytes = ScratchVar(TealType.bytes)
         dices_results = abi.make(abi.DynamicArray[abi.Uint8])
 
         n_dices = dices.length()
         get_dice = dice.store(dices[i.load()].use(lambda value: value.get()))
-        roll_dice = ((p_dice.load() / rolled_dices.load()) % dice.load()) + Int(1)
+        roll_dice = (p_dice.load() % dice.load()) + Int(1)
         randomness = self.get_randomness()
 
         idx = i.store(Int(0))
@@ -156,7 +158,6 @@ class AlgoDices(Application):
             p_dice_bytes.store(Itob(p_dice.load())),
             p_dice_bytes.store(BytesMod(randomness, p_dice_bytes.load())),
             p_dice.store(Btoi(p_dice_bytes.load())),
-            rolled_dices.store(Int(1)),
             (n_results := abi.Uint16()).set(n_dices),
             dices_results_bytes.store(n_results.encode()),
             For(idx, idx_cond, idx_iter).Do(
@@ -165,7 +166,7 @@ class AlgoDices(Application):
                 dices_results_bytes.store(
                     Concat(dices_results_bytes.load(), result.encode())
                 ),
-                rolled_dices.store(rolled_dices.load() * dice.load()),
+                p_dice.store(p_dice.load() / dice.load()),
             ),
             self.randomness_round[Txn.sender()].set_default(),
             dices_results.decode(dices_results_bytes.load()),

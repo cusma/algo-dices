@@ -100,16 +100,16 @@ getrandomness_1:
 txn Sender
 bytec_1 // "randomness_round"
 app_local_get
-store 17
+store 16
 txn Sender
-store 18
-load 18
+store 17
+load 17
 len
 itob
 extract 6 0
-load 18
+load 17
 concat
-store 18
+store 17
 itxn_begin
 intc_2 // appl
 itxn_field TypeEnum
@@ -118,10 +118,10 @@ app_global_get
 itxn_field ApplicationID
 pushbytes 0x47c20c23 // "must_get(uint64,byte[])byte[]"
 itxn_field ApplicationArgs
-load 17
+load 16
 itob
 itxn_field ApplicationArgs
-load 18
+load 17
 itxn_field ApplicationArgs
 intc_0 // 0
 itxn_field Fee
@@ -132,31 +132,31 @@ retsub
 
 // is_valid_faces
 isvalidfaces_2:
-store 19
-load 19
+store 18
+load 18
 intc_3 // 2
 ==
-load 19
+load 18
 pushint 4 // 4
 ==
 ||
-load 19
+load 18
 intc_2 // 6
 ==
 ||
-load 19
+load 18
 pushint 8 // 8
 ==
 ||
-load 19
+load 18
 pushint 10 // 10
 ==
 ||
-load 19
+load 18
 pushint 12 // 12
 ==
 ||
-load 19
+load 18
 pushint 20 // 20
 ==
 ||
@@ -164,15 +164,15 @@ retsub
 
 // book_dices_roll
 bookdicesroll_3:
-store 16
-load 16
+store 15
+load 15
 global Round
 >
 // Dices roll round must be in the future.
 assert
 txn Sender
 bytec_1 // "randomness_round"
-load 16
+load 15
 app_local_put
 retsub
 
@@ -181,9 +181,9 @@ rolldices_4:
 store 4
 store 3
 intc_0 // 0
-store 13
+store 12
 rolldices_4_l1:
-load 13
+load 12
 pushint 1000 // 1000
 global MinTxnFee
 /
@@ -199,8 +199,8 @@ assert
 load 4
 intc_0 // 0
 extract_uint16
-store 11
-load 11
+store 10
+load 10
 pushint 14 // 14
 <=
 // Too many dices. Max dices per roll: 14.
@@ -214,8 +214,8 @@ load 5
 load 4
 intc_0 // 0
 extract_uint16
-store 11
-load 11
+store 10
+load 10
 <
 bnz rolldices_4_l7
 load 7
@@ -228,22 +228,20 @@ store 8
 load 8
 btoi
 store 7
-intc_1 // 1
-store 9
 load 4
 intc_0 // 0
 extract_uint16
-store 11
-load 11
-store 14
-load 14
+store 10
+load 10
+store 13
+load 13
 pushint 65536 // 65536
 <
 assert
-load 14
+load 13
 itob
 extract 6 0
-store 10
+store 9
 intc_0 // 0
 store 5
 rolldices_4_l5:
@@ -251,8 +249,8 @@ load 5
 load 4
 intc_0 // 0
 extract_uint16
-store 11
-load 11
+store 10
+load 10
 <
 bz rolldices_4_l9
 load 4
@@ -262,32 +260,30 @@ load 5
 intc_3 // 2
 +
 getbyte
-store 12
-load 12
+store 11
+load 11
 store 6
 load 7
-load 9
-/
 load 6
 %
 intc_1 // 1
 +
-store 15
-load 15
+store 14
+load 14
 pushint 256 // 256
 <
 assert
-load 10
+load 9
 pushbytes 0x00 // 0x00
 intc_0 // 0
-load 15
+load 14
 setbyte
 concat
-store 10
-load 9
-load 6
-*
 store 9
+load 7
+load 6
+/
+store 7
 load 5
 intc_1 // 1
 +
@@ -301,8 +297,8 @@ load 5
 intc_3 // 2
 +
 getbyte
-store 12
-load 12
+store 11
+load 11
 store 6
 load 6
 callsub isvalidfaces_2
@@ -330,22 +326,22 @@ itxn_field ApprovalProgram
 bytec_2 // 0x068101
 itxn_field ClearStateProgram
 itxn_submit
-load 13
+load 12
 intc_1 // 1
 +
-store 13
+store 12
 b rolldices_4_l1
 rolldices_4_l9:
 txn Sender
 bytec_1 // "randomness_round"
 intc_0 // 0
 app_local_put
-load 10
+load 9
 retsub
 
 // create
 create_5:
-store 20
+store 19
 txn GlobalNumUint
 intc_1 // 1
 ==
@@ -369,17 +365,17 @@ assert
 intc_0 // 0
 bytec_0 // "beacon_app_id"
 app_global_get_ex
-store 22
 store 21
-load 22
+store 20
+load 21
 !
 // AlgoDices App already created!
 assert
-load 20
+load 19
 txnas Applications
 pushint 110096026 // 110096026
 ==
-load 20
+load 19
 txnas Applications
 pushint 947957720 // 947957720
 ==
@@ -389,13 +385,13 @@ assert
 intc_0 // 0
 bytec_0 // "beacon_app_id"
 app_global_get_ex
-store 24
 store 23
-load 24
+store 22
+load 23
 !
 assert
 bytec_0 // "beacon_app_id"
-load 20
+load 19
 txnas Applications
 app_global_put
 retsub
