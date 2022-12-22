@@ -2,22 +2,34 @@
 🎲 AlgoDices
 """
 
-from typing import Final, Literal
+from typing import Final
+from algosdk.constants import MIN_TXN_FEE
 from pyteal import *
 from beaker import *
 
+MAX_FACES = 20
+MAX_N_DICES = 14
+
+# Ensure that the maximum dice to the power of the max number of
+# simultaneous dices fits in a 64 bits integer, which is necessary for
+# randomness generation below.
+assert MAX_FACES**MAX_N_DICES <= 2**64
+
+OP_CODE_BUDGET_TXNS = 1
+TESTNET_BEACON_APP_ID = 110096026
+MAINNET_BEACON_APP_ID = 947957720
+
 
 class AlgoDices(Application):
-    """Algorand Dices Application"""
+    """AlgoDices Application"""
 
     ################
     # GLOBAL STATE #
     ################
     beacon_app_id: Final[ApplicationStateValue] = ApplicationStateValue(
         stack_type=TealType.uint64,
-        default=Int(110096026),
         static=True,
-        descr="The App ID of the randomness beacon. Must adhere to ARC-21.",
+        descr="The App ID of the Randomness Beacon. Must adhere to ARC-21.",
     )
 
     ################
@@ -50,79 +62,163 @@ class AlgoDices(Application):
             Suffix(InnerTxn.last_log(), Int(4)),
         )
 
+    @internal(TealType.uint64)
+    def is_valid_faces(self, faces: Expr) -> Expr:
+        return Or(
+            faces == Int(2),
+            faces == Int(4),
+            faces == Int(6),
+            faces == Int(8),
+            faces == Int(10),
+            faces == Int(12),
+            faces == Int(20),
+        )
+
     ###############
     # ABI METHODS #
     ###############
     @external
-    def book_die_roll(self, future_round: abi.Uint64) -> Expr:
+    def book_dices_roll(self, future_round: abi.Uint64) -> Expr:
         """
-        Book a die roll for a future round.
+        Book dices roll for a future round.
 
         Args:
-            future_round: Future round booked for a die roll
+            future_round: Future round booked for dices roll
         """
         return Seq(
+            # Preconditions
             Assert(
                 future_round.get() > Global.round(),
-                comment="Die roll round must be in the future.",
+                comment="Dices roll round must be in the future.",
             ),
+            # Effects
             self.randomness_round[Txn.sender()].set(future_round.get()),
         )
 
     @external
-    def roll_die(
+    def roll_dices(
         self,
         randomness_beacon: abi.Application,
-        faces: abi.Uint64,
+        dices: abi.DynamicArray[abi.Uint8],
         *,
-        output: abi.StaticArray[abi.Uint64, Literal[3]],
+        output: abi.DynamicArray[abi.Uint8],
     ) -> Expr:
         """
-        Roll a die with a given number of faces.
+        Roll dices with a given number of faces. Fee: 3 * min_fee.
+
+        Example:
+            - Roll 1d6, set: dices = [6]
+            - Roll 2d6, 1d8 and 1d20, set: dices = [6, 6, 8, 20]
 
         Args:
-            randomness_beacon: Randomness Beacon App ID (110096026)
-            faces: Number of faces (2, 4, 6, 8, 10, 12, 20)
+            randomness_beacon: Randomness Beacon App ID (TestNet: 110096026, MainNet: 947957720)
+            dices: Array of dices to roll (faces: 2, 4, 6, 8, 10, 12, 20)
 
         Returns:
-            Die roll: (booked_round, faces, result)
+            Dices roll result.
         """
-        randomness = Btoi(
-            Extract(string=self.get_randomness(), start=Int(0), length=Int(8))
-        )
-        is_valid_faces = Or(
-            faces.get() == Int(2),
-            faces.get() == Int(4),
-            faces.get() == Int(6),
-            faces.get() == Int(8),
-            faces.get() == Int(10),
-            faces.get() == Int(12),
-            faces.get() == Int(20),
-        )
+        # Scratch Space
+        i = ScratchVar(TealType.uint64)
+        dice = ScratchVar(TealType.uint64)
+        p_dice = ScratchVar(TealType.uint64)
+        p_dice_bytes = ScratchVar(TealType.bytes)
+        dices_results_bytes = ScratchVar(TealType.bytes)
+        dices_results = abi.make(abi.DynamicArray[abi.Uint8])
+
+        n_dices = dices.length()
+        get_dice = dice.store(dices[i.load()].use(lambda value: value.get()))
+        roll_dice = (p_dice.load() % dice.load()) + Int(1)
+        randomness = self.get_randomness()
+
+        idx = i.store(Int(0))
+        idx_cond = i.load() < n_dices
+        idx_iter = i.store(i.load() + Int(1))
+
+        op_code_budget = OpUp(mode=OpUpMode.OnCall)
         return Seq(
+            op_code_budget.maximize_budget(
+                fee=Int(OP_CODE_BUDGET_TXNS * MIN_TXN_FEE),
+                fee_source=OpUpFeeSource.GroupCredit,
+            ),
+            # Preconditions
             Assert(
                 randomness_beacon.application_id() == self.beacon_app_id,
-                comment="Randomness Beacon App ID must be correct.",
+                comment="Wrong Randomness Beacon App ID.",
             ),
             Assert(
-                is_valid_faces,
-                comment="Number of faces must be equal to real ideal dices.",
+                n_dices <= Int(MAX_N_DICES),
+                comment=f"Too many dices. Max dices per roll: {MAX_N_DICES}.",
             ),
-            (booked_round := abi.Uint64()).set(self.randomness_round[Txn.sender()]),
-            (result := abi.Uint64()).set(randomness % faces.get() + Int(1)),
+            # Effects
+            p_dice.store(Int(1)),
+            For(idx, idx_cond, idx_iter).Do(
+                get_dice,
+                Assert(
+                    self.is_valid_faces(dice.load()),
+                    comment="Number of faces must be equal to real ideal dices.",
+                ),
+                p_dice.store(p_dice.load() * dice.load()),
+            ),
+            p_dice_bytes.store(Itob(p_dice.load())),
+            p_dice_bytes.store(BytesMod(randomness, p_dice_bytes.load())),
+            p_dice.store(Btoi(p_dice_bytes.load())),
+            (n_results := abi.Uint16()).set(n_dices),
+            dices_results_bytes.store(n_results.encode()),
+            For(idx, idx_cond, idx_iter).Do(
+                get_dice,
+                (result := abi.Uint8()).set(roll_dice),
+                dices_results_bytes.store(
+                    Concat(dices_results_bytes.load(), result.encode())
+                ),
+                p_dice.store(p_dice.load() / dice.load()),
+            ),
             self.randomness_round[Txn.sender()].set_default(),
-            output.set([booked_round, faces, result]),
+            dices_results.decode(dices_results_bytes.load()),
+            output.set(dices_results),
         )
 
     ##################
     # DAPP LIFECYCLE #
     ##################
     @create
-    def create(self) -> Expr:
+    def create(self, randomness_beacon: abi.Application) -> Expr:
         """
         AlgoDices App Create
+
+        Args:
+            randomness_beacon: Randomness Beacon App ID (TestNet: 110096026, MainNet: 947957720)
         """
-        return self.initialize_application_state()
+        return Seq(
+            Assert(
+                Txn.global_num_uints() == Int(self.app_state.num_uints),
+                comment="Wrong Global State Schema. Must be: 1 uint.",
+            ),
+            Assert(
+                Txn.global_num_byte_slices() == Int(self.app_state.num_byte_slices),
+                comment="Wrong Global State Schema. Must be: 0 byte slices.",
+            ),
+            Assert(
+                Txn.local_num_uints() == Int(self.app_state.num_uints),
+                comment="Wrong Local State Schema. Must be: 1 uint.",
+            ),
+            Assert(
+                Txn.local_num_byte_slices() == Int(self.app_state.num_byte_slices),
+                comment="Wrong Local State Schema. Must be: 0 byte slices.",
+            ),
+            Assert(
+                Not(self.beacon_app_id.exists()),
+                comment="AlgoDices App already created!",
+            ),
+            Assert(
+                Or(
+                    randomness_beacon.application_id() == Int(TESTNET_BEACON_APP_ID),
+                    randomness_beacon.application_id() == Int(MAINNET_BEACON_APP_ID),
+                ),
+                comment="Wrong Randomness Beacon App ID. Must be either: "
+                "110096026 (TestNet) or 947957720 (MainNet).",
+            ),
+            self.beacon_app_id.set(randomness_beacon.application_id()),
+        )
 
     @opt_in
     def opt_in(self) -> Expr:

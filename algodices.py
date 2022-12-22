@@ -2,17 +2,18 @@
 🎲 AlgoDices, let's roll verifiable random dices on Algornd!
 
 Usage:
-  algodices.py optin
-  algodices.py book <future_rounds>
-  algodices.py roll <faces>
+  algodices.py optin [--test]
+  algodices.py book <future_rounds> [--test]
+  algodices.py roll <dice> ... [--test]
 
 Commands:
   optin    Subscribe to AlgoDices.
   book     Book a die roll in future round.
-  roll     Roll a die.
+  roll     Roll dices (e.g. 2d6, 1d8 and 1d20: roll 6 6 8 20).
 
 Options:
   -h, --help
+  -t, --test
 """
 
 import sys
@@ -26,10 +27,19 @@ from algosdk.constants import MIN_TXN_FEE, MNEMONIC_LEN
 
 from beaker.client import ApplicationClient, Network
 from beaker.client.api_providers import AlgoExplorer
+from beaker.client.logic_error import LogicException
 
-from algodices_dapp import AlgoDices
+from algodices_dapp import (
+    MAINNET_BEACON_APP_ID,
+    MAX_N_DICES,
+    OP_CODE_BUDGET_TXNS,
+    TESTNET_BEACON_APP_ID,
+    AlgoDices,
+)
 
-ALGO_DICES_APP_ID = 121287966
+TESTNET_ALGO_DICES_APP_ID = 149631769
+MAINNET_ALGO_DICES_APP_ID = 0  # TODO
+
 RANDOMNESS_BEACON_DELAY = 8
 FACES = [2, 4, 6, 8, 10, 12, 20]
 
@@ -37,8 +47,8 @@ FACES = [2, 4, 6, 8, 10, 12, 20]
 def args_types(args: dict) -> dict:
     if args["<future_rounds>"] is not None:
         args["<future_rounds>"] = int(args["<future_rounds>"])
-    if args["<faces>"] is not None:
-        args["<faces>"] = int(args["<faces>"])
+    if args["<dice>"] is not None:
+        args["<dice>"] = list(map(int, args["<dice>"]))
     return args
 
 
@@ -59,61 +69,80 @@ def main():
     user = AccountTransactionSigner(mnemonic.to_private_key(mnemonic_phrase))
     user_address = account.address_from_private_key(user.private_key)
 
-    # API
-    testnet = AlgoExplorer(Network.TestNet)
+    if args["--test"]:
+        network = Network.TestNet
+        beacon_app_id = TESTNET_BEACON_APP_ID
+        algo_dices_app_id = TESTNET_ALGO_DICES_APP_ID
+    else:
+        network = Network.MainNet
+        beacon_app_id = MAINNET_BEACON_APP_ID
+        algo_dices_app_id = TESTNET_ALGO_DICES_APP_ID
 
-    # APP
+    # API
+    api = AlgoExplorer(network)
+
+    # APP CLIENT
     algo_dices = ApplicationClient(
-        client=testnet.algod(),
+        client=api.algod(),
         app=AlgoDices(),
-        app_id=ALGO_DICES_APP_ID,
+        app_id=algo_dices_app_id,
         signer=user,
         sender=user_address,
     )
+    algo_dices.build()
 
     # CLI
     if args["optin"]:
         print("\n --- Opt-in 🎲 AlgoDices App...")
-        return algo_dices.opt_in()
+        try:
+            algo_dices.opt_in()
+        except LogicException as e:
+            print(f"\n{e}\n")
+        return
 
     if args["book"]:
-        current_round = testnet.algod().status()["last-round"]
+        current_round = api.algod().status()["last-round"]
         booked_round = current_round + args["<future_rounds>"]
         reveal_round = booked_round + RANDOMNESS_BEACON_DELAY
-        print(f"\n --- 🔖 Booking a die roll for round {booked_round}...")
-        algo_dices.call(
-            method=AlgoDices.book_die_roll,
-            future_round=booked_round,
-        )
-        return print(f" --- Result can be revealed from round: {reveal_round}")
+        print(f"\n --- 🔖 Booking a dices roll for round {booked_round}...")
+        try:
+            algo_dices.call(
+                method=AlgoDices.book_dices_roll,
+                future_round=booked_round,
+            )
+            print(f" --- Result can be revealed from round: {reveal_round}")
+        except LogicException as e:
+            print(f"\n{e}\n")
+        return
 
     elif args["roll"]:
-        if args["<faces>"] not in FACES:
+        dices = args["<dice>"]
+        if len(dices) > MAX_N_DICES:
+            quit(f"\n⚠️ Too many dices. Max {MAX_N_DICES} dices per roll!")
+        if not all(faces in FACES for faces in args["<dice>"]):
             quit(f"\n⚠️ Number of faces must be either: {FACES}")
 
-        current_round = testnet.algod().status()["last-round"]
-        booked_round = algo_dices.get_account_state(user_address)[
-            AlgoDices.randomness_round.key.byte_str[1:-1]
-        ]
+        current_round = api.algod().status()["last-round"]
+        booked_round = algo_dices.get_account_state(user_address)["randomness_round"]
         rounds_left = booked_round + RANDOMNESS_BEACON_DELAY - current_round
         if rounds_left > 0:
-            print(f" --- ⏳ {rounds_left} round left to reveal die's roll...")
+            print(f" --- ⏳ {rounds_left} round left to reveal dices roll...")
         else:
-            sp = testnet.algod().suggested_params()
-            sp.fee = 2 * MIN_TXN_FEE
-            faces = args["<faces>"]
-            result = algo_dices.call(
-                suggested_params=sp,
-                method=AlgoDices.roll_die,
-                randomness_beacon=AlgoDices.beacon_app_id.default.value,
-                faces=faces,
-            )
-            booked_round = result.return_value[0]
-            faces = result.return_value[1]
-            roll_result = result.return_value[2]
-            return print(
-                f" --- 🎲 d{faces} rolled at round {booked_round}: {roll_result}"
-            )
+            sp = api.algod().suggested_params()
+            sp.fee = (2 + OP_CODE_BUDGET_TXNS) * MIN_TXN_FEE
+            try:
+                results = algo_dices.call(
+                    suggested_params=sp,
+                    method=AlgoDices.roll_dices,
+                    randomness_beacon=beacon_app_id,
+                    dices=args["<dice>"],
+                )
+                print("\n --- 🎰 RESULTS 🎰")
+                for i in range(len(dices)):
+                    print(f" --- 🎲 d{dices[i]}:\t{results.return_value[i]}")
+            except LogicException as e:
+                print(f"\n{e}\n")
+            return
 
     else:
         return print("\n --- Wrong command. Enter --help for CLI usage!\n")
